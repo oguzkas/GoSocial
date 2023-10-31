@@ -8,6 +8,7 @@
 import Foundation
 import Firebase
 
+
 class PostModel: ObservableObject{
     @Published var postList = [Post] ()
     
@@ -21,7 +22,7 @@ class PostModel: ObservableObject{
             }
         }
     }
-
+    
     func fetchPost(){
         let db = Firestore.firestore()
         
@@ -40,4 +41,33 @@ class PostModel: ObservableObject{
         }
     }
     
+    func addComment(to postID: String, text: String) {
+        let db = Firestore.firestore()
+        let commentRef = db.collection("Post").document(postID).collection("comments")
+        commentRef.addDocument(data: ["text": text]) { error in
+            if error != nil {
+                print("Add Comment Error!!")
+            }
+        }
+    }
+    
+    
+    func fetchComments(for postID: String, completion: @escaping ([Comment]) -> Void) {
+        let db = Firestore.firestore()
+        let commentRef = db.collection("Post").document(postID).collection("comments")
+        
+        commentRef.getDocuments { snapshot, error in
+            if error == nil {
+                if let snapshot = snapshot {
+                    let comments = snapshot.documents.map { datas in
+                        return Comment(id: datas.documentID, text: datas["text"] as? String ?? "")
+                    }
+                    completion(comments)
+                }
+            } else {
+                print("Fetch Comments Error!!")
+            }
+        }
+        
+    }
 }

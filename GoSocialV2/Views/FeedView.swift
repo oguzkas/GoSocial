@@ -14,6 +14,12 @@ struct FeedView: View {
     @State var title = ""
     @State var posts = ""
     @State var likedPosts: [Post] = []
+    @State var showCommentsForPostID: String? = nil
+    @State var commentsForPost: [Comment] = []
+    @State var newCommentText = ""
+    @State var activeTextFieldID: String? = nil
+    
+    
     var body: some View {
         ZStack {
             Color.gray
@@ -25,11 +31,82 @@ struct FeedView: View {
                         VStack(alignment: .leading) {
                             Text(item.title)
                                 .font(.headline)
+                            
                             Text(item.posts)
                                 .font(.subheadline)
                                 .foregroundStyle(.gray)
+                            /* HStack {
+                             HStack {
+                             TextField("Enter your comment", text: $newCommentText)
+                             .textFieldStyle(.roundedBorder)
+                             
+                             }
+                             
+                             
+                             Button(action: {
+                             if !newCommentText.isEmpty {
+                             dataClass.addComment(to: item.id, text: newCommentText)
+                             newCommentText = ""
+                             }
+                             }) {
+                             Image(systemName: "pencil")
+                             .foregroundStyle(.blue).bold()
+                             }
+                             
+                             
+                             } */
+                            
                             HStack{
+                                
+                                TextField("Enter your comment", text: Binding(
+                                    get: {
+                                        if item.id == activeTextFieldID {
+                                            return newCommentText
+                                        } else {
+                                            return ""
+                                        }
+                                    },
+                                    set: {
+                                        if item.id == activeTextFieldID {
+                                            newCommentText = $0
+                                        }
+                                    }
+                                ))
+                                .textFieldStyle(.roundedBorder)
+                                
+                                Button(action: {
+                                    activeTextFieldID = item.id
+                                    if !newCommentText.isEmpty {
+                                    dataClass.addComment(to: item.id, text: newCommentText)
+                                    newCommentText = ""
+                                    }
+                                    }) {
+                                    Image(systemName: "pencil")
+                                    .foregroundStyle(.blue).bold()
+                                    }
+                            }
+                            
+                            
+                            
+                            
+                            HStack{
+                                Button {
+                                    if showCommentsForPostID == item.id {
+                                        showCommentsForPostID = nil
+                                    } else {
+                                        showCommentsForPostID = item.id
+                                        
+                                        dataClass.fetchComments(for: item.id) { comments in
+                                            commentsForPost = comments
+                                        }
+                                    }
+                                } label: {
+                                    Text(showCommentsForPostID == item.id ? "Close Comments" : "Show Comments")
+                                }
+                                .buttonStyle(BorderlessButtonStyle())
+                                
                                 Spacer()
+                                
                                 Button {
                                     if let index = likedPosts.firstIndex(where: {$0.id == item.id }) {
                                         likedPosts.remove(at: index)
@@ -41,7 +118,13 @@ struct FeedView: View {
                                         .foregroundStyle(likedPosts.contains(item) ? .red: .primary)
                                 }
                                 .buttonStyle(BorderlessButtonStyle())
-
+                            }
+                            
+                            if showCommentsForPostID == item.id {
+                                ForEach(commentsForPost) { comment in
+                                    Text(comment.text)
+                                }
+                                
                             }
                         }
                         
@@ -63,10 +146,10 @@ struct FeedView: View {
                                 Image(systemName: "escape")
                                     .foregroundStyle(.red)
                             })
-                                Image("avatar")
-                                    .resizable()
-                                    .aspectRatio(contentMode: .fit)
-                                    .frame(width: 100, height: 60)
+                            Image("avatar")
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: 100, height: 60)
                                 .clipShape(Circle())
                         })
                     
@@ -98,9 +181,9 @@ struct FeedView: View {
                                         .textFieldStyle(.roundedBorder)
                                 }
                                 .overlay(
-                                RoundedRectangle(cornerRadius:20)
-                                    .stroke(lineWidth: 2)
-                                    .foregroundStyle(.gray)
+                                    RoundedRectangle(cornerRadius:20)
+                                        .stroke(lineWidth: 2)
+                                        .foregroundStyle(.gray)
                                 )
                                 Button(action: {
                                     dataClass.addPost(title: title, posts: posts)
@@ -113,8 +196,8 @@ struct FeedView: View {
                                         .frame(maxWidth: .infinity)
                                         .padding()
                                         .background(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .fill(Color.black)
+                                            RoundedRectangle(cornerRadius: 20)
+                                                .fill(Color.black)
                                         )
                                         .padding(.horizontal)
                                 })
